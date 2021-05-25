@@ -1,4 +1,4 @@
-export interface ShareTransfer {
+export interface Transfer {
   AccountNumber: string;
   Amount?: string;
   AmountOption?: number;

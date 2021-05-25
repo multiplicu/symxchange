@@ -19,6 +19,7 @@ export interface Name {
   EcoaCode: number;
   Email?: string;
   EmployerName?: string;
+  ExtraAddress?: string;
   First?: string;
   FormW8OnFile: number;
   HomePhone?: string;

@@ -1,9 +1,10 @@
-import { CredRep } from '../interfaces/credRep';
-import { Irs } from '../interfaces/irs';
-import { LoanApp } from '../interfaces/loanApp';
-import { Lookup } from '../interfaces/lookup';
-import { ShareCheckOrder } from '../interfaces/shareCheckOrder';
-import { ShareTransfer } from '../interfaces/shareTransfer';
+import { CredRep } from './../interfaces/credRep';
+import { Irs } from './../interfaces/irs';
+import { Loan } from './../interfaces/loan';
+import { LoanApp } from './../interfaces/loanApp';
+import { Lookup } from './../interfaces/lookup';
+import { ShareCheckOrder } from './../interfaces/shareCheckOrder';
+import { Transfer } from './../interfaces/transfer';
 import { Account } from './../interfaces/account';
 import { Comment } from './../interfaces/comment';
 import { CredRepItem } from './../interfaces/credRepItem';
@@ -13,6 +14,7 @@ import { LoanAppPerson } from './../interfaces/loanAppPerson';
 import { Name } from './../interfaces/name';
 import { Preference } from './../interfaces/preference';
 import { Share } from './../interfaces/share';
+import { ShareHold } from './../interfaces/shareHold';
 import { Tracking } from './../interfaces/tracking';
 import { GetResponse } from './get';
 import { PagedResponse } from './get-paged';
@@ -45,12 +47,20 @@ export interface ShareResponse extends GetResponse {
   Share: Share;
 }
 
+export interface ShareHoldResponse extends GetResponse {
+  ShareHold: ShareHold;
+}
+
 export interface ShareCheckOrderResponse extends GetResponse {
   ShareCheckOrder: ShareCheckOrder;
 }
 
 export interface ShareTransferResponse extends GetResponse {
-  ShareTransfer: ShareTransfer;
+  ShareTransfer: Transfer;
+}
+
+export interface LoanTransferResponse extends GetResponse {
+  LoanTransfer: Transfer;
 }
 
 export interface CommentPagedResponse extends PagedResponse {
@@ -62,7 +72,12 @@ export interface SharePagedResponse extends PagedResponse {
 }
 
 export interface NamePagedResponse extends PagedResponse {
+  PagedResponse: { Name: Name[] };
   Name: Name[];
+}
+
+export interface LoanPagedResponse extends PagedResponse {
+  Loan: Loan[];
 }
 
 export interface LoanAppPagedResponse extends PagedResponse {

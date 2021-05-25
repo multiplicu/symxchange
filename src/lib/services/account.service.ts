@@ -2,14 +2,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { Account } from '../interfaces/account';
-import { LoanApp } from '../interfaces/loanApp';
-import { LoanAppNote } from '../interfaces/loanAppNote';
-import { CreateResponse } from '../responses/create';
+import { Account } from './../interfaces/account';
 import { Comment } from './../interfaces/comment';
 import { CredRep } from './../interfaces/credRep';
 import { CredRepItem } from './../interfaces/credRepItem';
+import { Loan } from './../interfaces/loan';
+import { LoanApp } from './../interfaces/loanApp';
 import { LoanAppFinance } from './../interfaces/loanAppFinance';
+import { LoanAppNote } from './../interfaces/loanAppNote';
 import { LoanAppPerson } from './../interfaces/loanAppPerson';
 import { Name } from './../interfaces/name';
 import { Preference } from './../interfaces/preference';
@@ -25,6 +25,8 @@ import {
   LoanAppNotePagedResponse,
   LoanAppPagedResponse,
   LoanAppTrackingResponse,
+  LoanPagedResponse,
+  LoanTransferResponse,
   LookupResponse,
   NamePagedResponse,
   PersonPagedResponse,
@@ -33,16 +35,17 @@ import {
   ShareCheckOrderResponse,
   SharePagedResponse,
   ShareResponse,
-  ShareTransferResponse
+  ShareTransferResponse,
 } from './../responses/account';
-import { BaseService } from './base.service';
+import { CreateResponse } from './../responses/create';
+import { BaseService, UserConfig } from './base.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AccountService extends BaseService {
-  public constructor(public http: HttpClient) {
-    super(http);
+  public constructor(public http: HttpClient, public config: UserConfig) {
+    super(http, config);
 
     this.url += `quest/account`;
   }
@@ -58,7 +61,9 @@ export class AccountService extends BaseService {
    */
   public getAccount(accountNumber: string): Observable<Account> {
     const method = 'getAccount';
-    const params = new HttpParams().set('AccountNumber', accountNumber).set('method', method);
+    const params = new HttpParams()
+      .set('AccountNumber', accountNumber)
+      .set('method', method);
 
     return this.get<AccountResponse>(this.url, params).pipe(
       map((res: AccountResponse) => res.Account)
@@ -71,7 +76,10 @@ export class AccountService extends BaseService {
    * @param accountNumber Account number to return
    * @param fields List of field names to return
    */
-  public getAccountSelect(accountNumber: string, fields: string[]): Observable<Account> {
+  public getAccountSelect(
+    accountNumber: string,
+    fields: string[]
+  ): Observable<Account> {
     const method = 'getAccountSelectFields';
     const params = new HttpParams()
       .set('AccountNumber', accountNumber)
@@ -90,7 +98,10 @@ export class AccountService extends BaseService {
    *
    * @param accountNumber Account number to return
    */
-  public getCommentPaged(accountNumber: string, returnCount: number = 100): Observable<Comment[]> {
+  public getCommentPaged(
+    accountNumber: string,
+    returnCount: number = 100
+  ): Observable<Comment[]> {
     const method = 'getCommentPagedList';
     const params = new HttpParams()
       .set('AccountNumber', accountNumber)
@@ -98,7 +109,13 @@ export class AccountService extends BaseService {
       .set('returnCount', returnCount.toString());
 
     return this.getPaged<CommentPagedResponse>(this.url, params).pipe(
-      map((res: CommentPagedResponse) => res.Comment || [])
+      map((res: CommentPagedResponse) =>
+        res.Comment
+          ? Array.isArray(res.Comment)
+            ? res.Comment
+            : [res.Comment]
+          : []
+      )
     );
   }
 
@@ -124,7 +141,9 @@ export class AccountService extends BaseService {
       .set('returnCount', returnCount.toString());
 
     return this.getPaged<SharePagedResponse>(this.url, params).pipe(
-      map((res: SharePagedResponse) => res.Share || [])
+      map((res: SharePagedResponse) =>
+        res.Share ? (Array.isArray(res.Share) ? res.Share : [res.Share]) : []
+      )
     );
   }
 
@@ -135,10 +154,90 @@ export class AccountService extends BaseService {
    */
   public getNamePaged(accountNumber: string): Observable<Name[]> {
     const method = 'getNamePagedList';
-    const params = new HttpParams().set('method', method).set('AccountNumber', accountNumber);
+    const params = new HttpParams()
+      .set('method', method)
+      .set('AccountNumber', accountNumber);
 
     return this.getPaged<NamePagedResponse>(this.url, params).pipe(
-      map((res: NamePagedResponse) => res.Name || [])
+      map((res: NamePagedResponse) =>
+        res.Name ? (Array.isArray(res.Name) ? res.Name : [res.Name]) : []
+      )
+    );
+  }
+
+  /**
+   * Returns a Name with specified fields
+   *
+   * @param accountNumber Account number to return
+   * @param locator Locator of the name to get fields from
+   * @param fields List of field names to return
+   */
+  public getNameSelect(
+    accountNumber: string,
+    locator: number,
+    fields: string[]
+  ): Observable<Name[]> {
+    const method = 'getNameSelectFields';
+    const params = new HttpParams()
+      .set('AccountNumber', accountNumber)
+      .set('NameLocator', locator.toString())
+      .set('fields', fields.join(','))
+      .set('includeAll', 'false')
+      .set('includeAllField', 'Name')
+      .set('method', method);
+
+    return this.get<NamePagedResponse>(this.url, params).pipe(
+      map((res: NamePagedResponse) => res.Name)
+    );
+  }
+
+  /**
+   * Returns all Names with specified fields
+   *
+   * @param accountNumber Account number to return
+   * @param fields List of field names to return
+   * @param returnCount Optional number of records to return
+   */
+  public getNamePagedListSelect(
+    accountNumber: string,
+    fields: string[],
+    returnCount: number = 100
+  ): Observable<Name[]> {
+    const method = 'getNamePagedListSelectFields';
+    const params = new HttpParams()
+      .set('AccountNumber', accountNumber)
+      .set('fields', fields.join(','))
+      .set('includeAll', 'false')
+      .set('includeAllField', 'Name')
+      .set('method', method)
+      .set('returnCount', returnCount.toString());
+
+    return this.getPaged<NamePagedResponse>(this.url, params).pipe(
+      map((res: NamePagedResponse) =>
+        res.Name ? (Array.isArray(res.Name) ? res.Name : [res.Name]) : []
+      )
+    );
+  }
+
+  /**
+   * Returns a list of loans from a given account number
+   *
+   * @param accountNumber Account number containing the loans
+   */
+  public getLoanPaged(
+    accountNumber: string,
+    returnCount: number = 100
+  ): Observable<Loan[]> {
+    const method = 'getLoanPagedList';
+    const params = new HttpParams()
+      .set('method', method)
+      .set('AccountNumber', accountNumber)
+      .set('returnCount', returnCount.toString());
+
+    return this.getPaged<LoanPagedResponse>(this.url, params).pipe(
+      map((res: LoanPagedResponse) =>
+        res.Loan ? (Array.isArray(res.Loan) ? res.Loan : [res.Loan]) : []
+      )
     );
   }
 
@@ -149,10 +248,50 @@ export class AccountService extends BaseService {
    */
   public getLoanAppPaged(accountNumber: string): Observable<LoanApp[]> {
     const method = 'getLoanAppPagedList';
-    const params = new HttpParams().set('method', method).set('AccountNumber', accountNumber);
+    const params = new HttpParams()
+      .set('method', method)
+      .set('AccountNumber', accountNumber);
 
     return this.getPaged<LoanAppPagedResponse>(this.url, params).pipe(
-      map((res: LoanAppPagedResponse) => res.LoanApp || [])
+      map((res: LoanAppPagedResponse) =>
+        res.LoanApp
+          ? Array.isArray(res.LoanApp)
+            ? res.LoanApp
+            : [res.LoanApp]
+          : []
+      )
+    );
+  }
+
+  /**
+   * Returns all LoanApps with specified fields
+   *
+   * @param accountNumber Account number to return
+   * @param fields List of field names to return
+   * @param returnCount Optional number of records to return
+   */
+  public getLoanAppPagedListSelect(
+    accountNumber: string,
+    fields: string[],
+    returnCount: number = 100
+  ): Observable<LoanApp[]> {
+    const method = 'getLoanAppPagedListSelectFields';
+    const params = new HttpParams()
+      .set('AccountNumber', accountNumber)
+      .set('fields', fields.join(','))
+      .set('includeAll', 'false')
+      .set('includeAllField', 'LoanApp')
+      .set('method', method)
+      .set('returnCount', returnCount.toString());
+
+    return this.getPaged<LoanAppPagedResponse>(this.url, params).pipe(
+      map((res: LoanAppPagedResponse) =>
+        res.LoanApp
+          ? Array.isArray(res.LoanApp)
+            ? res.LoanApp
+            : [res.LoanApp]
+          : []
+      )
     );
   }
 
@@ -173,7 +312,13 @@ export class AccountService extends BaseService {
       .set('AccountNumber', accountNumber);
 
     return this.getPaged<LoanAppFinancePagedResponse>(this.url, params).pipe(
-      map((res: LoanAppFinancePagedResponse) => res.LoanAppFinance || [])
+      map((res: LoanAppFinancePagedResponse) =>
+        res.LoanAppFinance
+          ? Array.isArray(res.LoanAppFinance)
+            ? res.LoanAppFinance
+            : [res.LoanAppFinance]
+          : []
+      )
     );
   }
 
@@ -183,7 +328,10 @@ export class AccountService extends BaseService {
    * @param accountNumber Account number containing the loan application
    * @param loanAppId Loan application ID that contains the notes to return
    */
-  public getNotes(accountNumber: string, loanAppId: string): Observable<LoanAppNote[]> {
+  public getNotes(
+    accountNumber: string,
+    loanAppId: string
+  ): Observable<LoanAppNote[]> {
     const method = 'getLoanAppNotePagedList';
     const params = new HttpParams()
       .set('method', method)
@@ -201,7 +349,10 @@ export class AccountService extends BaseService {
    * @param accountNumber Account number containing the Persons
    * @param loanAppId Loan application ID of which to look for person objects
    */
-  public getPersonPaged(accountNumber: string, loanAppId: string): Observable<LoanAppPerson[]> {
+  public getPersonPaged(
+    accountNumber: string,
+    loanAppId: string
+  ): Observable<LoanAppPerson[]> {
     const method = 'getLoanAppPersonPagedList';
     const params = new HttpParams()
       .set('method', method)
@@ -209,7 +360,47 @@ export class AccountService extends BaseService {
       .set('AccountNumber', accountNumber);
 
     return this.getPaged<PersonPagedResponse>(this.url, params).pipe(
-      map((res: PersonPagedResponse) => res.LoanAppPerson || [])
+      map((res: PersonPagedResponse) =>
+        res.LoanAppPerson
+          ? Array.isArray(res.LoanAppPerson)
+            ? res.LoanAppPerson
+            : [res.LoanAppPerson]
+          : []
+      )
+    );
+  }
+
+  /**
+   * Returns all Persons with specified fields
+   *
+   * @param accountNumber Account number to return
+   * @param fields List of field names to return
+   * @param returnCount Optional number of records to return
+   */
+  public getPersonPagedListSelect(
+    accountNumber: string,
+    appId: string,
+    fields: string[],
+    returnCount: number = 100
+  ): Observable<LoanAppPerson[]> {
+    const method = 'getLoanAppPersonPagedListSelectFields';
+    const params = new HttpParams()
+      .set('AccountNumber', accountNumber)
+      .set('LoanAppId', appId)
+      .set('fields', fields.join(','))
+      .set('includeAll', 'false')
+      .set('includeAllField', 'LoanAppPerson')
+      .set('method', method)
+      .set('returnCount', returnCount.toString());
+
+    return this.getPaged<PersonPagedResponse>(this.url, params).pipe(
+      map((res: PersonPagedResponse) =>
+        res.LoanAppPerson
+          ? Array.isArray(res.LoanAppPerson)
+            ? res.LoanAppPerson
+            : [res.LoanAppPerson]
+          : []
+      )
     );
   }
 
@@ -238,7 +429,13 @@ export class AccountService extends BaseService {
       .set('returnCount', returnCount.toString());
 
     return this.getPaged<CredRepResponse>(this.url, params).pipe(
-      map((res: CredRepResponse) => res.CredRep || [])
+      map((res: CredRepResponse) =>
+        res.CredRep
+          ? Array.isArray(res.CredRep)
+            ? res.CredRep
+            : [res.CredRep]
+          : []
+      )
     );
   }
 
@@ -261,7 +458,13 @@ export class AccountService extends BaseService {
       .set('returnCount', returnCount.toString());
 
     return this.getPaged<CredRepItemResponse>(this.url, params).pipe(
-      map((res: CredRepItemResponse) => res.CredRepItem || [])
+      map((res: CredRepItemResponse) =>
+        res.CredRepItem
+          ? Array.isArray(res.CredRepItem)
+            ? res.CredRepItem
+            : [res.CredRepItem]
+          : []
+      )
     );
   }
 
@@ -271,7 +474,10 @@ export class AccountService extends BaseService {
    * @param accountNumber Account number to pull tracking from
    * @param loanAppId The loan application ID to pull tracking from
    */
-  public getLoanAppTrackingList(accountNumber: string, loanAppId: string): Observable<Tracking[]> {
+  public getLoanAppTrackingList(
+    accountNumber: string,
+    loanAppId: string
+  ): Observable<Tracking[]> {
     const method = 'getLoanAppTrackingPagedList';
     const params = new HttpParams()
       .set('AccountNumber', accountNumber)
@@ -279,7 +485,13 @@ export class AccountService extends BaseService {
       .set('method', method);
 
     return this.getPaged<LoanAppTrackingResponse>(this.url, params).pipe(
-      map((res: LoanAppTrackingResponse) => res.LoanAppTracking || [])
+      map((res: LoanAppTrackingResponse) =>
+        res.LoanAppTracking
+          ? Array.isArray(res.LoanAppTracking)
+            ? res.LoanAppTracking
+            : [res.LoanAppTracking]
+          : []
+      )
     );
   }
 
@@ -290,7 +502,10 @@ export class AccountService extends BaseService {
    * @param fields List of field names to return
    * @param returnCount Optional number of records to return in a call
    */
-  public getPreferenceFields(accountNumber: string, fields: string[]): Observable<Preference> {
+  public getPreferenceFields(
+    accountNumber: string,
+    fields: string[]
+  ): Observable<Preference> {
     // Fields to select from the account
     const method = 'getPreferenceSelectFields';
 
@@ -330,7 +545,13 @@ export class AccountService extends BaseService {
       .set('returnCount', returnCount.toString());
 
     return this.getPaged<PreferencePagedResponse>(this.url, params).pipe(
-      map((res: PreferencePagedResponse) => res.Preference || [])
+      map((res: PreferencePagedResponse) =>
+        res.Preference
+          ? Array.isArray(res.Preference)
+            ? res.Preference
+            : [res.Preference]
+          : []
+      )
     );
   }
 
@@ -346,18 +567,24 @@ export class AccountService extends BaseService {
    * @param name Primary person to save with the account
    * @param preference Preference object to save with the account
    */
-  public saveAccount(account: any, name: any, preference: any): Observable<string> {
+  public saveAccount(
+    account: any,
+    name: any,
+    preference: any
+  ): Observable<string> {
     const body = JSON.stringify({
       method: 'createAccount',
       AccountCreatableFields: account,
       NameCreatableFields: name,
-      PreferenceCreatableFields: preference
+      PreferenceCreatableFields: preference,
     });
 
-    return this.http.post<CreateResponse>(this.url, body, { headers: this.headers_ }).pipe(
-      catchError(this.handleError),
-      map((res: CreateResponse) => res.CreateResponse)
-    );
+    return this.http
+      .post<CreateResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: CreateResponse) => res.CreateResponse.AccountNumber)
+      );
   }
 
   /**
@@ -370,16 +597,97 @@ export class AccountService extends BaseService {
     const body = JSON.stringify({
       method: 'createName',
       AccountNumber: accountNumber,
-      Creatable: name
+      Creatable: name,
     });
 
     return this.http
       .post<CreateResponse>(this.url, body, {
-        headers: this.headers_
+        headers: this.headers_,
       })
       .pipe(
         catchError(this.handleError),
-        map((res: CreateResponse) => res.CreateResponse)
+        map((res: CreateResponse) => res.CreateResponse.NameLocator)
+      );
+  }
+
+  /**
+   * Creates and saves a loan to a given account and returns the loan's new ID
+   *
+   * @param accountNumber Account number to save the loan to
+   * @param loan A formatted loan object to save to the account
+   */
+  public saveLoan(accountNumber: string, loan: any): Observable<string> {
+    const body = JSON.stringify({
+      method: 'createLoan',
+      AccountNumber: accountNumber,
+      Creatable: loan,
+    });
+
+    return this.http
+      .post<CreateResponse>(this.url, body, {
+        headers: this.headers_,
+      })
+      .pipe(
+        catchError(this.handleError),
+        map((res: CreateResponse) => res.CreateResponse.LoanId)
+      );
+  }
+
+  /**
+   * Creates and saves a name to a loan and returns the locator of the new name
+   *
+   * @param accountNumber Account number containing the loan to save to
+   * @param loanAppId Loan ID to save the name to
+   * @param name A formatted name to save to a loan
+   */
+  public saveLoanName(
+    accountNumber: string,
+    loanId: string,
+    name: any
+  ): Observable<string> {
+    const body = JSON.stringify({
+      method: 'createLoanName',
+      AccountNumber: accountNumber,
+      LoanId: loanId,
+      Creatable: name,
+    });
+
+    return this.http
+      .post<CreateResponse>(this.url, body, {
+        headers: this.headers_,
+      })
+      .pipe(
+        catchError(this.handleError),
+        map((res: CreateResponse) => res.CreateResponse.LoanNameLocator)
+      );
+  }
+
+  /**
+   * Creates and saves a pledge to a loan and returns the locator of the new pledge
+   *
+   * @param accountNumber Account number containing the loan to save to
+   * @param loanAppId Loan ID to save the pledge to
+   * @param pledge A formatted pledge to save to a loan
+   */
+  public saveLoanPledge(
+    accountNumber: string,
+    loanId: string,
+    pledge: any
+  ): Observable<number> {
+    const body = JSON.stringify({
+      method: 'createLoanPledge',
+      AccountNumber: accountNumber,
+      LoanId: loanId,
+      Creatable: pledge,
+    });
+
+    return this.http
+      .post<CreateResponse>(this.url, body, {
+        headers: this.headers_,
+      })
+      .pipe(
+        catchError(this.handleError),
+        map((res: CreateResponse) => res.CreateResponse.LoanPledgeLocator)
       );
   }
 
@@ -393,13 +701,15 @@ export class AccountService extends BaseService {
     const body = JSON.stringify({
       method: 'createNote',
       AccountNumber: accountNumber,
-      Creatable: note
+      Creatable: note,
     });
 
-    return this.http.post<CreateResponse>(this.url, body, { headers: this.headers_ }).pipe(
-      catchError(this.handleError),
-      map((res: CreateResponse) => res.CreateResponse)
-    );
+    return this.http
+      .post<CreateResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: CreateResponse) => res.CreateResponse)
+      );
   }
 
   /**
@@ -410,18 +720,24 @@ export class AccountService extends BaseService {
    * @param loanAppId Loan application ID to save the note to
    * @param note A formatted note object to save to the loan application
    */
-  public saveLoanAppNote(accountNumber: string, loanAppId: string, note: any): Observable<number> {
+  public saveLoanAppNote(
+    accountNumber: string,
+    loanAppId: string,
+    note: any
+  ): Observable<number> {
     const body = JSON.stringify({
       method: 'createLoanAppNote',
       AccountNumber: accountNumber,
       LoanAppId: loanAppId,
-      Creatable: note
+      Creatable: note,
     });
 
-    return this.http.post<CreateResponse>(this.url, body, { headers: this.headers_ }).pipe(
-      catchError(this.handleError),
-      map((res: CreateResponse) => res.CreateResponse)
-    );
+    return this.http
+      .post<CreateResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: CreateResponse) => res.CreateResponse)
+      );
   }
 
   /**
@@ -431,17 +747,22 @@ export class AccountService extends BaseService {
    * @param accountNumber Account number to save the loan application to
    * @param loanApp A formated loan application to save to the account
    */
-  public saveApplication(accountNumber: string, loanApp: any): Observable<number> {
+  public saveApplication(
+    accountNumber: string,
+    loanApp: any
+  ): Observable<number> {
     const body = JSON.stringify({
       method: 'createLoanApp',
       AccountNumber: accountNumber,
-      Creatable: loanApp
+      Creatable: loanApp,
     });
 
-    return this.http.post<CreateResponse>(this.url, body, { headers: this.headers_ }).pipe(
-      catchError(this.handleError),
-      map((res: CreateResponse) => res.CreateResponse)
-    );
+    return this.http
+      .post<CreateResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: CreateResponse) => res.CreateResponse.LoanAppId)
+      );
   }
 
   /**
@@ -461,13 +782,15 @@ export class AccountService extends BaseService {
       method: 'createLoanAppPerson',
       AccountNumber: accountNumber,
       LoanAppId: loanAppId,
-      Creatable: person
+      Creatable: person,
     });
 
-    return this.http.post<CreateResponse>(this.url, body, { headers: this.headers_ }).pipe(
-      catchError(this.handleError),
-      map((res: CreateResponse) => res.CreateResponse)
-    );
+    return this.http
+      .post<CreateResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: CreateResponse) => res.CreateResponse)
+      );
   }
 
   /**
@@ -487,13 +810,70 @@ export class AccountService extends BaseService {
       method: 'createLoanAppTracking',
       AccountNumber: accountNumber,
       LoanAppId: loanAppId,
-      Creatable: tracking
+      Creatable: tracking,
     });
 
-    return this.http.post<CreateResponse>(this.url, body, { headers: this.headers_ }).pipe(
-      catchError(this.handleError),
-      map((res: CreateResponse) => res.CreateResponse)
-    );
+    return this.http
+      .post<CreateResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: CreateResponse) => res.CreateResponse)
+      );
+  }
+
+  /**
+   * Creates and saves a finance record to a loan application and returns the locator of the
+   * new finance record
+   *
+   * @param accountNumber Account number containing the loan application to save to
+   * @param loanAppId Loan application ID to save the finance to
+   * @param finance A formatted finance record to save to a loan application
+   */
+  public saveLoanAppFinance(
+    accountNumber: string,
+    loanAppId: string,
+    finance: any
+  ): Observable<number> {
+    const body = JSON.stringify({
+      method: 'createLoanAppFinance',
+      AccountNumber: accountNumber,
+      LoanAppId: loanAppId,
+      Creatable: finance,
+    });
+
+    return this.http
+      .post<CreateResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: CreateResponse) => res.CreateResponse)
+      );
+  }
+
+  /**
+   * Creates a tracking record under the given loan and returns the tracking locator
+   *
+   * @param accountNumber Account number containing the loan to save to
+   * @param loanAppId Loan ID to save the tracking to
+   * @param tracking Tracking record to save to the loan
+   */
+  public saveLoanTracking(
+    accountNumber: string,
+    loanId: string,
+    tracking: any
+  ): Observable<number> {
+    const body = JSON.stringify({
+      method: 'createLoanTracking',
+      AccountNumber: accountNumber,
+      LoanId: loanId,
+      Creatable: tracking,
+    });
+
+    return this.http
+      .post<CreateResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: any) => res.CreateResponse)
+      );
   }
 
   /**
@@ -502,17 +882,22 @@ export class AccountService extends BaseService {
    * @param accountNumber Account number to save the tracking record to
    * @param tracking Tracking record to save to the account
    */
-  public saveTracking(accountNumber: string, tracking: any): Observable<number> {
+  public saveTracking(
+    accountNumber: string,
+    tracking: any
+  ): Observable<number> {
     const body = JSON.stringify({
       method: 'createTracking',
       AccountNumber: accountNumber,
-      Creatable: tracking
+      Creatable: tracking,
     });
 
-    return this.http.post<CreateResponse>(this.url, body, { headers: this.headers_ }).pipe(
-      catchError(this.handleError),
-      map((res: any) => res.CreateResponse)
-    );
+    return this.http
+      .post<CreateResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: any) => res.CreateResponse)
+      );
   }
 
   /**
@@ -531,13 +916,15 @@ export class AccountService extends BaseService {
       method: 'createOverdraftList',
       AccountNumber: accountNumber,
       shareId,
-      overdraftList
+      overdraftList,
     });
 
-    return this.http.post<CreateResponse>(this.url, body, { headers: this.headers_ }).pipe(
-      catchError(this.handleError),
-      map((res: CreateResponse) => res)
-    );
+    return this.http
+      .post<CreateResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: CreateResponse) => res)
+      );
   }
 
   /**
@@ -550,13 +937,15 @@ export class AccountService extends BaseService {
     const body = JSON.stringify({
       method: 'createLookup',
       AccountNumber: accountNumber,
-      Creatable: lookup
+      Creatable: lookup,
     });
 
-    return this.http.post<LookupResponse>(this.url, body, { headers: this.headers_ }).pipe(
-      catchError(this.handleError),
-      map((res: any) => res.CreateResponse)
-    );
+    return this.http
+      .post<LookupResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: any) => res.CreateResponse)
+      );
   }
 
   /**
@@ -569,13 +958,15 @@ export class AccountService extends BaseService {
     const body = JSON.stringify({
       method: 'createIrs',
       AccountNumber: accountNumber,
-      Creatable: irs
+      Creatable: irs,
     });
 
-    return this.http.post<IrsResponse>(this.url, body, { headers: this.headers_ }).pipe(
-      catchError(this.handleError),
-      map((res: any) => res.CreateResponse)
-    );
+    return this.http
+      .post<IrsResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: any) => res.CreateResponse)
+      );
   }
 
   /**
@@ -588,13 +979,44 @@ export class AccountService extends BaseService {
     const body = JSON.stringify({
       method: 'createShare',
       AccountNumber: accountNumber,
-      Creatable: share
+      Creatable: share,
     });
 
-    return this.http.post<ShareResponse>(this.url, body, { headers: this.headers_ }).pipe(
-      catchError(this.handleError),
-      map((res: any) => res.Share)
-    );
+    return this.http
+      .post<ShareResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: any) => res.Share)
+      );
+  }
+
+  /**
+   * Saves a hold to a share on a given account
+   *
+   * @param accountNumber Account number to save the share hold to
+   * @param shareId Share ID to save the hold to
+   * @param hold Hold to save to the account
+   */
+  public saveShareHold(
+    accountNumber: string,
+    shareId: string,
+    hold: any
+  ): Observable<number> {
+    const body = JSON.stringify({
+      method: 'createShareHold',
+      AccountNumber: accountNumber,
+      ShareId: shareId,
+      Creatable: hold,
+    });
+
+    return this.http
+      .post<ShareCheckOrderResponse>(this.url, body, {
+        headers: this.headers_,
+      })
+      .pipe(
+        catchError(this.handleError),
+        map((res: any) => res.CreateResponse)
+      );
   }
 
   /**
@@ -613,12 +1035,12 @@ export class AccountService extends BaseService {
       method: 'createShareCheckOrder',
       AccountNumber: accountNumber,
       ShareId: shareId,
-      Creatable: checkOrder
+      Creatable: checkOrder,
     });
 
     return this.http
       .post<ShareCheckOrderResponse>(this.url, body, {
-        headers: this.headers_
+        headers: this.headers_,
       })
       .pipe(
         catchError(this.handleError),
@@ -642,13 +1064,42 @@ export class AccountService extends BaseService {
       method: 'createShareTransfer',
       AccountNumber: accountNumber,
       ShareId: shareId,
-      Creatable: transfer
+      Creatable: transfer,
     });
 
-    return this.http.post<ShareTransferResponse>(this.url, body, { headers: this.headers_ }).pipe(
-      catchError(this.handleError),
-      map((res: any) => res.CreateResponse)
-    );
+    return this.http
+      .post<ShareTransferResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: any) => res.CreateResponse)
+      );
+  }
+
+  /**
+   * Saves a loan transfer to a loan on a given account
+   *
+   * @param accountNumber Account number to save the loan transfer to
+   * @param loanId Loan ID to save the transfer to
+   * @param transfer Loan transfer to save to the account
+   */
+  public saveLoanTransfer(
+    accountNumber: string,
+    loanId: string,
+    transfer: any
+  ): Observable<number> {
+    const body = JSON.stringify({
+      method: 'createLoanTransfer',
+      AccountNumber: accountNumber,
+      LoanId: loanId,
+      Creatable: transfer,
+    });
+
+    return this.http
+      .post<LoanTransferResponse>(this.url, body, { headers: this.headers_ })
+      .pipe(
+        catchError(this.handleError),
+        map((res: any) => res.CreateResponse)
+      );
   }
 
   // **************
@@ -664,9 +1115,11 @@ export class AccountService extends BaseService {
       method: 'deleteLoanAppPerson',
       AccountNumber: accountNumber,
       LoanAppId: loanAppId,
-      LoanAppPersonLocator: personLocator
+      LoanAppPersonLocator: personLocator,
     });
 
-    return this.http.post<LoanAppPerson>(this.url, body, { headers: this.headers_ });
+    return this.http.post<LoanAppPerson>(this.url, body, {
+      headers: this.headers_,
+    });
   }
 }
