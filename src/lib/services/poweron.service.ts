@@ -1,15 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ExecutePowerOnResponse } from '../responses/poweron';
-import { BaseService } from './base.service';
+import { ExecutePowerOnResponse } from './../responses/poweron';
+import { BaseService, UserConfig } from './base.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class PoweronService extends BaseService {
-  public constructor(public http: HttpClient) {
-    super(http);
+  public constructor(public http: HttpClient, public config: UserConfig) {
+    super(http, config);
 
     this.url += `quest/poweron`;
   }
@@ -24,17 +24,17 @@ export class PoweronService extends BaseService {
       method: 'executePowerOn',
       Header: {
         MessageId: 'executePowerOn',
-        RGState: state
+        RGState: state,
       },
       Body: {
         File: file,
         RGSession: session,
-        UserDefinedParameters: params
-      }
+        UserDefinedParameters: params,
+      },
     });
 
     return this.http.post<ExecutePowerOnResponse>(this.url, body, {
-      headers: this.headers_
+      headers: this.headers_,
     });
   }
 }

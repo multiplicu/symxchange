@@ -2,24 +2,26 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { InsTable } from '../interfaces/insTable';
-import { InsType } from '../interfaces/insType';
-import { LoanDefault } from '../interfaces/loanDefault';
+import { InsTable } from './../interfaces/insTable';
+import { InsType } from './../interfaces/insType';
+import { LoanDefault } from './../interfaces/loanDefault';
+import { PayCalc } from './../interfaces/payCalc';
 import { Warning } from './../interfaces/warning';
 import {
   GetWarningResponse,
   InsTablePagedResponse,
   InsTypePagedResponse,
-  LoanDefaultsResponse
+  LoanDefaultsResponse,
+  PayCalcResponse,
 } from './../responses/parameter';
-import { BaseService } from './base.service';
+import { BaseService, UserConfig } from './base.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ParameterService extends BaseService {
-  public constructor(public http: HttpClient) {
-    super(http);
+  public constructor(public http: HttpClient, public config: UserConfig) {
+    super(http, config);
 
     this.url += `quest/parameter`;
   }
@@ -66,6 +68,29 @@ export class ParameterService extends BaseService {
 
     return this.getPaged<LoanDefaultsResponse>(this.url, params).pipe(
       map((res: LoanDefaultsResponse) => res.LoanDefault)
+    );
+  }
+
+  /**
+   * Returns a paged list of Loan Defaults with specified fields
+   *
+   * @param fields Loan default fields to return
+   * @param returnCount Optional number of records to return in a call
+   */
+  public getPayCalcSelect(
+    payCalcType: number,
+    fields: string[]
+  ): Observable<PayCalc> {
+    const method = 'getPayCalcSelectFields';
+    const params = new HttpParams()
+      .set('method', method)
+      .set('PayCalcPaymentCalculationType', payCalcType.toString())
+      .set('includeAllField', 'PayCalc')
+      .set('includeAll', 'true')
+      .set('fields', fields.join(','));
+
+    return this.get<PayCalcResponse>(this.url, params).pipe(
+      map((res: PayCalcResponse) => res.PayCalc)
     );
   }
 

@@ -177,24 +177,12 @@ export interface Share {
 
 export interface AlternateAddress {
   EntryId: number;
-  AlternateAddress: AlternateAddressEnum;
-}
-
-export enum AlternateAddressEnum {
-  MichaelWHanchey = 'MICHAEL W HANCHEY',
-  OrMICHAELWHANCHEY = 'or MICHAEL W HANCHEY',
-  SpringfieldMo65810 = 'SPRINGFIELD MO 65810',
-  The6262SParkhavenLn = '6262 S PARKHAVEN LN'
+  AlternateAddress: string;
 }
 
 export interface AlternatePhone {
   EntryId: number;
-  AlternatePhone: EPhone;
-}
-
-export enum EPhone {
-  The4178318393 = '417-831-8393',
-  The4178381550 = '417-838-1550'
+  AlternatePhone: string;
 }
 
 export interface AuthFeeOption {
@@ -214,12 +202,12 @@ export interface InsuranceBalanceAge {
 
 export interface PayeeLine {
   EntryId: number;
-  PayeeLine: AlternateAddressEnum;
+  PayeeLine: string;
 }
 
 export interface PayeePhone {
   EntryId: number;
-  PayeePhone: EPhone;
+  PayeePhone: string;
 }
 
 export interface PreMthDivAccrued {

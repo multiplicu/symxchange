@@ -1,32 +1,38 @@
-import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpHeaders,
+  HttpParams,
+} from '@angular/common/http';
 import { Injectable, Optional } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '../../environments/environment';
 
 export class UserConfig {
-  public url: string = environment.url;
+  public url: string;
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class BaseService {
   public token: string;
-  private url_: string = `${environment.url}`;
+  private _url: string;
 
-  protected headers_: HttpHeaders = new HttpHeaders({ 'Content-Type': 'application/json' });
+  protected headers_: HttpHeaders = new HttpHeaders({
+    'Content-Type': 'application/json',
+  });
 
   protected pagedToken: string;
 
   public get url(): string {
-    return this.url_;
+    return this._url;
   }
   public set url(v: string) {
-    this.url_ = v;
+    this._url = v;
   }
 
-  public constructor(public http: HttpClient, @Optional() config?: UserConfig) {
+  public constructor(public http: HttpClient, config: UserConfig) {
     if (config) {
       this.url = config.url;
     }
