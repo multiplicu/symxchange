@@ -21,9 +21,12 @@ export class FileService extends BaseService {
       .set('method', method)
       .set('tns:FileName', file);
 
-    return this.get(this.url, params).pipe(
-      map((res: FileResponse) => res.Data)
-    );
+    return this.http
+      .get<{ Response: FileResponse }>(this.url, {
+        params,
+        headers: this.headers_,
+      })
+      .pipe(map((res: { Response: FileResponse }) => res?.Response?.Data));
   }
 
   public uploadDataFile(
