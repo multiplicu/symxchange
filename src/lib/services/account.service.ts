@@ -1,20 +1,3 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-import { Account } from './../interfaces/account';
-import { Comment } from './../interfaces/comment';
-import { CredRep } from './../interfaces/credRep';
-import { CredRepItem } from './../interfaces/credRepItem';
-import { Loan } from './../interfaces/loan';
-import { LoanApp } from './../interfaces/loanApp';
-import { LoanAppFinance } from './../interfaces/loanAppFinance';
-import { LoanAppNote } from './../interfaces/loanAppNote';
-import { LoanAppPerson } from './../interfaces/loanAppPerson';
-import { Name } from './../interfaces/name';
-import { Preference } from './../interfaces/preference';
-import { Share } from './../interfaces/share';
-import { Tracking } from './../interfaces/tracking';
 import {
   AccountResponse,
   CommentPagedResponse,
@@ -25,6 +8,7 @@ import {
   LoanAppNotePagedResponse,
   LoanAppPagedResponse,
   LoanAppTrackingResponse,
+  LoanNamePagedResponse,
   LoanPagedResponse,
   LoanTransferResponse,
   LookupResponse,
@@ -35,10 +19,28 @@ import {
   ShareCheckOrderResponse,
   SharePagedResponse,
   ShareResponse,
-  ShareTransferResponse,
+  ShareTransferResponse
 } from './../responses/account';
-import { CreateResponse } from './../responses/create';
 import { BaseService, UserConfig } from './base.service';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { catchError, map } from 'rxjs/operators';
+
+import { Account } from './../interfaces/account';
+import { Comment } from './../interfaces/comment';
+import { CreateResponse } from './../responses/create';
+import { CredRep } from './../interfaces/credRep';
+import { CredRepItem } from './../interfaces/credRepItem';
+import { Injectable } from '@angular/core';
+import { Loan } from './../interfaces/loan';
+import { LoanApp } from './../interfaces/loanApp';
+import { LoanAppFinance } from './../interfaces/loanAppFinance';
+import { LoanAppNote } from './../interfaces/loanAppNote';
+import { LoanAppPerson } from './../interfaces/loanAppPerson';
+import { Name } from './../interfaces/name';
+import { Observable } from 'rxjs';
+import { Preference } from './../interfaces/preference';
+import { Share } from './../interfaces/share';
+import { Tracking } from './../interfaces/tracking';
 
 @Injectable({
   providedIn: 'root',
@@ -319,6 +321,27 @@ export class AccountService extends BaseService {
             : [res.LoanAppFinance]
           : []
       )
+    );
+  }
+
+  /**
+   * Returns a list of name records for a given loan
+   *
+   * @param accountNumber Account number containing the loan
+   * @param loanId Loan ID to return the name records for
+   */
+  public getLoanNamePagedList(
+    accountNumber: string,
+    loanId: string
+  ): Observable<Name[]> {
+    const method = 'getLoanNamePagedList';
+    const params = new HttpParams()
+      .set('method', method)
+      .set('LoanId', loanId)
+      .set('AccountNumber', accountNumber);
+
+    return this.getPaged<LoanNamePagedResponse>(this.url, params).pipe(
+      map((res: LoanNamePagedResponse) => res.LoanName ? Array.isArray(res.LoanName) ? res.LoanName : [res.LoanName] : [])
     );
   }
 

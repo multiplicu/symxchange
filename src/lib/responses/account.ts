@@ -1,23 +1,23 @@
+import { Account } from './../interfaces/account';
+import { Comment } from './../interfaces/comment';
 import { CredRep } from './../interfaces/credRep';
+import { CredRepItem } from './../interfaces/credRepItem';
+import { GetResponse } from './get';
 import { Irs } from './../interfaces/irs';
 import { Loan } from './../interfaces/loan';
 import { LoanApp } from './../interfaces/loanApp';
-import { Lookup } from './../interfaces/lookup';
-import { ShareCheckOrder } from './../interfaces/shareCheckOrder';
-import { Transfer } from './../interfaces/transfer';
-import { Account } from './../interfaces/account';
-import { Comment } from './../interfaces/comment';
-import { CredRepItem } from './../interfaces/credRepItem';
 import { LoanAppFinance } from './../interfaces/loanAppFinance';
 import { LoanAppNote } from './../interfaces/loanAppNote';
 import { LoanAppPerson } from './../interfaces/loanAppPerson';
+import { Lookup } from './../interfaces/lookup';
 import { Name } from './../interfaces/name';
+import { PagedResponse } from './get-paged';
 import { Preference } from './../interfaces/preference';
 import { Share } from './../interfaces/share';
+import { ShareCheckOrder } from './../interfaces/shareCheckOrder';
 import { ShareHold } from './../interfaces/shareHold';
 import { Tracking } from './../interfaces/tracking';
-import { GetResponse } from './get';
-import { PagedResponse } from './get-paged';
+import { Transfer } from './../interfaces/transfer';
 
 export interface AccountResponse extends GetResponse {
   Account: Account;
@@ -90,6 +90,10 @@ export interface LoanAppFinancePagedResponse extends PagedResponse {
 
 export interface LoanAppNotePagedResponse extends PagedResponse {
   LoanAppNote: LoanAppNote[];
+}
+
+export interface LoanNamePagedResponse extends PagedResponse {
+  LoanName: Name[];
 }
 
 export interface PersonPagedResponse extends PagedResponse {
